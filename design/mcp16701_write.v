@@ -106,7 +106,7 @@ end
 else
 begin
 
-wr_i2c <= 0;
+//wr_i2c <= 0; //commented by hariram need to check tomorrow 
 done <= 0;
 
 case(state)
