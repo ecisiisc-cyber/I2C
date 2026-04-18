@@ -1,16 +1,15 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Company: ECIS,IISc
-// Engineer: Hariram P derived from https://github.com/aseddin/ece_4305/blob/main/M15%20to%20M18%20-%20Complete%20System/HDL/i2c_master.sv
+// Company: 
+// Engineer: Hariram 
 // 
-// Create Date: 03/05/2026 03:27:12 PM
+// Create Date: 04/18/2026 07:35:52 PM
 // Design Name: 
-// Module Name: i2c_top
+// Module Name: mcp16701_write
 // Project Name: 
-// Target Devices: neso a7
-// Tool Versions: 2025.1
-// Description: 
-// 
+// Target Devices: 
+// Tool Versions: 
+// Description: trying to make only write to the pmic rad operation is not possible  dervied form the i2c top 
 // Dependencies: 
 // 
 // Revision:
@@ -20,7 +19,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module mcp16701_i2c_top
+
+module mcp16701_write
 (
     input clk,
     input reset,
@@ -29,7 +29,7 @@ module mcp16701_i2c_top
     input read,
     input write,
 
-    input [7:0] reg_addr,
+    input [15:0] reg_addr,
     input [7:0] write_data,
 
     output reg [7:0] read_data,
@@ -80,13 +80,14 @@ i2c_master i2c0
 localparam IDLE          = 0,
            START_CMD     = 1,
            DEV_ADDR_W    = 2,
-           REG_ADDR      = 3,
-           WRITE_DATA    = 4,
-           RESTART_CMD   = 5,
-           DEV_ADDR_R    = 6,
-           READ_DATA     = 7,
-           STOP_CMD      = 8,
-           DONE          = 9;
+           REG_ADDR_H    = 3,
+           REG_ADDR_L    = 4,
+           WRITE_DATA    = 5,
+           RESTART_CMD   = 6,
+           DEV_ADDR_R    = 7,
+           READ_DATA     = 8,
+           STOP_CMD      = 9,
+           DONE          = 10;
 
 reg [3:0] state;
 
@@ -132,18 +133,28 @@ DEV_ADDR_W:
 if(done_tick)
 begin
     cmd <= 3'b001;
-    din <= {MCP16701_ADDR,1'b0};
+    din <= {MCP16701_ADDR,1'b0};//write mode
     wr_i2c <= 1;
-    state <= REG_ADDR;
+    state <= REG_ADDR_H;
+end
+//--------------------------------------------------
+
+REG_ADDR_H:
+if(done_tick)
+begin
+    cmd <= 3'b001;
+    din <= reg_addr[15:8];
+    wr_i2c <= 1;
+    state <= REG_ADDR_L;
 end
 
 //--------------------------------------------------
 
-REG_ADDR:
+REG_ADDR_L:
 if(done_tick)
 begin
     cmd <= 3'b001;
-    din <= reg_addr;
+    din <= reg_addr[7:0];
     wr_i2c <= 1;
 
     if(write)
