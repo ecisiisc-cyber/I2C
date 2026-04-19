@@ -189,26 +189,29 @@ end
 //--------------------------------------------------
 
 DEV_ADDR_R:
+begin 
 if(ready)
 begin
     cmd <= 3'b001;
     din <= {MCP16701_ADDR,1'b1};
     wr_i2c <= 1;
-    state <= READ_DATA;
+   
 end
-
+if(done_tick) begin  state <= READ_DATA; end
+end
 //--------------------------------------------------
 
-READ_DATA:
+READ_DATA:begin 
 if(ready)
 begin
     cmd <= 3'b010;
     din <= 8'b00000001; // NACK after 1 byte
     wr_i2c <= 1;
     read_data <= dout;
-    state <= STOP_CMD;
+   
 end
-
+if(done_tick) begin  state <= STOP_CMD; end
+end
 //--------------------------------------------------
 
 STOP_CMD:
