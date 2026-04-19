@@ -108,7 +108,10 @@ module tb;
     reg [7:0] write_data_tb;
 
     wire [7:0] read_data;
-    wire done_tb, scl_tb, sda_tb;
+    wire done_tb, scl_tb;
+    wire sda_tb;
+    reg drive_en;
+    assign sda_tb=drive_en?0:1'bz;
 
     // 2. MANDATORY: I2C Pull-up Resistors
     // Without these, the 'tri' lines in your code stay at 'Z' (High Impedance)
@@ -136,6 +139,7 @@ module tb;
     // 5. The Test Sequence
     initial begin
         // Initialize everything
+        drive_en=0;
         clk_tb = 0;
         reset_tb = 1;
         start_tb = 0;
@@ -147,6 +151,7 @@ module tb;
         // Release Reset after 100ns
         #100 reset_tb = 0;
         #100;
+        repeat(5000) @(posedge clk_tb);
 
         // Trigger ONE Write Transaction
         @(posedge clk_tb);
@@ -157,6 +162,30 @@ module tb;
         
         @(posedge clk_tb);
         start_tb = 0;             // Clear Start so it doesn't repeat
+        
+        //second write
+        @(done_tb);
+        repeat(5000) @(posedge clk_tb);
+        reg_addr_tb   = 16'h1234; // Example Address
+        write_data_tb = 8'h56;    // Example Data
+        write_tb      = 1;        // Set to Write mode
+        start_tb      = 1;        // Pulse Start
+        @(posedge clk_tb);
+         start_tb = 0;     
+         write_tb=0;
+         //first read
+        @(done_tb);
+         repeat(5000) @(posedge clk_tb);
+         reg_addr_tb   = 16'hABCD; // Example Address
+         write_data_tb = 8'hEF;    // Example Data
+         read_tb      = 1;        // Set to read mode
+         start_tb      = 1;        // Pulse Start
+         @(posedge clk_tb);
+          start_tb = 0;     
+          wait(dut.state==8);
+          drive_en=1;
+          repeat(2)@(negedge scl_tb);
+          drive_en=0;
 
         // 6. Wait for the Master to finish
         // I2C is SLOW. At 100MHz with dvsr=250, one byte takes ~10,000ns.

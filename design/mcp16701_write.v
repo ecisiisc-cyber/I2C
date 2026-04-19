@@ -101,6 +101,7 @@ begin
     state <= IDLE;
     wr_i2c <= 0;
     done <= 0;
+    read_data <= 0;
 end
 
 else
@@ -207,10 +208,10 @@ begin
     cmd <= 3'b010;
     din <= 8'b00000001; // NACK after 1 byte
     wr_i2c <= 1;
-    read_data <= dout;
+    
    
 end
-if(done_tick) begin  state <= STOP_CMD; end
+if(done_tick) begin  read_data <= dout;state <= STOP_CMD; end
 end
 //--------------------------------------------------
 
