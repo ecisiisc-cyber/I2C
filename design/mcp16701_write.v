@@ -106,7 +106,7 @@ end
 else
 begin
 
-//wr_i2c <= 0; //commented by hariram need to check tomorrow 
+wr_i2c <= 0; 
 done <= 0;
 
 case(state)
@@ -118,7 +118,6 @@ begin
 end
 
 //--------------------------------------------------
-
 START_CMD:
 if(ready)
 begin
@@ -126,58 +125,61 @@ begin
     wr_i2c <= 1;
     state <= DEV_ADDR_W;
 end
-
 //--------------------------------------------------
 
-DEV_ADDR_W:
-if(done_tick)
+DEV_ADDR_W: begin 
+if(ready)
 begin
     cmd <= 3'b001;
     din <= {MCP16701_ADDR,1'b0};//write mode
     wr_i2c <= 1;
-    state <= REG_ADDR_H;
+    
+end
+if (done_tick) begin state <= REG_ADDR_H; end
 end
 //--------------------------------------------------
 
-REG_ADDR_H:
-if(done_tick)
+
+REG_ADDR_H: begin 
+if(ready)
 begin
     cmd <= 3'b001;
     din <= reg_addr[15:8];
     wr_i2c <= 1;
-    state <= REG_ADDR_L;
+    
 end
-
+if(done_tick) begin state <= REG_ADDR_L; end
+end
 //--------------------------------------------------
 
-REG_ADDR_L:
-if(done_tick)
+REG_ADDR_L:begin 
+if(ready)
 begin
     cmd <= 3'b001;
     din <= reg_addr[7:0];
     wr_i2c <= 1;
-
-    if(write)
-        state <= WRITE_DATA;
-    else
-        state <= RESTART_CMD;
 end
-
+    if(write)
+   begin if(done_tick) begin state <= WRITE_DATA;end end
+else
+   begin if(done_tick)begin state <= RESTART_CMD;end end
+end
 //--------------------------------------------------
 
-WRITE_DATA:
-if(done_tick)
+WRITE_DATA:begin 
+if(ready)
 begin
     cmd <= 3'b001;
     din <= write_data;
     wr_i2c <= 1;
-    state <= STOP_CMD;
+  
 end
-
+  if(done_tick) begin state <= STOP_CMD; end
+end
 //--------------------------------------------------
 
 RESTART_CMD:
-if(done_tick)
+if(ready)
 begin
     cmd <= 3'b100;
     wr_i2c <= 1;
@@ -187,7 +189,7 @@ end
 //--------------------------------------------------
 
 DEV_ADDR_R:
-if(done_tick)
+if(ready)
 begin
     cmd <= 3'b001;
     din <= {MCP16701_ADDR,1'b1};
@@ -198,7 +200,7 @@ end
 //--------------------------------------------------
 
 READ_DATA:
-if(done_tick)
+if(ready)
 begin
     cmd <= 3'b010;
     din <= 8'b00000001; // NACK after 1 byte
@@ -210,7 +212,7 @@ end
 //--------------------------------------------------
 
 STOP_CMD:
-if(done_tick)
+if(ready)
 begin
     cmd <= 3'b011;
     wr_i2c <= 1;
@@ -220,7 +222,7 @@ end
 //--------------------------------------------------
 
 DONE:
-if(done_tick)
+if(ready)
 begin
     done <= 1;
     state <= IDLE;
